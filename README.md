@@ -8,7 +8,7 @@ Ikuti langkah-langkah berikut untuk menjalankan FastAPI di environment lokal.
 
 ```bash
 git clone https://github.com/SafeVision-2-0/safevision-aiml-fastapi.git
-cd NAMA-REPO
+cd safevision-aiml-fastapi
 ```
 
 ---
@@ -125,4 +125,5 @@ app/
 * Gunakan `.env` untuk konfigurasi sensitif (jangan di-push ke GitHub)
 
 ---
+
 
