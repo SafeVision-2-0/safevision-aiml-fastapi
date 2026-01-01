@@ -5,3 +5,6 @@ ipykernel
 opencv-python
 matplotlib
 supervision
+
+# Database
+sqlmodel
