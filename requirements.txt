@@ -4,4 +4,4 @@ numpy
 ipykernel
 opencv-python
 matplotlib
-sort-tracker
+supervision

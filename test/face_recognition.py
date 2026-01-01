@@ -2,10 +2,8 @@ import os
 import cv2
 import torch
 from facenet_pytorch import InceptionResnetV1, MTCNN
-from tqdm import tqdm
-from types import MethodType
-# from face_tracking import FaceTracking
-
+import supervision as sv
+import numpy as np
 
 class FaceRecognize:
     def __init__(self, keep_all=True, thresholds=[0.4, 0.5, 0.5], min_face_size=60):
@@ -16,9 +14,20 @@ class FaceRecognize:
         )
         self.resnet = InceptionResnetV1(pretrained='casia-webface').eval()
         self.keep_all = keep_all
-        self.tracker = FaceTracking()
         self.saved_picture = "./picture/"
         self.all_people_faces = {}
+        self.tracker = sv.ByteTrack()
+        self.identity_map = {}
+        self.frame_count = 0      
+
+    def to_detections(self, boxes):
+        boxes = np.array(boxes, dtype=np.float32)
+        
+        return sv.Detections(
+            xyxy=boxes,
+            confidence=np.ones(len(boxes), dtype=np.float32),
+            class_id=np.zeros(len(boxes), dtype=np.int32)
+        )
 
     def encode(self, face_tensor):
         if face_tensor.ndim == 3:
@@ -52,16 +61,20 @@ class FaceRecognize:
                 print(f"Wajah tidak ditemukan di: {file}")
                 continue
 
-            emb = self.resnet(face)
+            with torch.no_grad():
+                emb = self.resnet(face)
+                
             self.all_people_faces[person_name] = emb[0]
 
         print("Selesai load gambar.")
         print("Jumlah orang tersimpan:", len(self.all_people_faces))
 
-    def detect(self, cam=0, thres=0.9):
+    def detect(self, cam=0, thres=0.7):
+        WINDOW_NAME = "Face Recognition"
         video = cv2.VideoCapture(cam)
 
         while True:
+            self.frame_count += 1
             ret, img0 = video.read()
             if not ret:
                 break
@@ -69,11 +82,30 @@ class FaceRecognize:
             rgb = cv2.cvtColor(img0, cv2.COLOR_BGR2RGB)
             boxes, faces = self.detect_box_faces(rgb) 
             
-            if faces is not None and boxes is not None:
-                for box, face_tensor in zip(boxes, faces):
-                    x, y, x2, y2 = map(int, box)
-
+            
+            if boxes is None or faces is None:
+                cv2.imshow(WINDOW_NAME, img0)
+                continue
+            
+            detections = self.to_detections(boxes)
+            tracked = self.tracker.update_with_detections(detections)
+            
+            if tracked.xyxy is None:
+                cv2.imshow(WINDOW_NAME, img0)
+                continue
+            
+            for i in range(len(tracked.xyxy)):    
+                x, y, x2, y2 = tracked.xyxy[i].astype(int)
+                track_id = tracked.tracker_id[i]
+                face_tensor = faces[i]
+                    
+                if track_id in self.identity_map:
+                    name = self.identity_map[track_id]["name"]
+                    self.identity_map[track_id]["last_seen"] = self.frame_count
+                    
+                else:
                     img_embedding = self.encode(face_tensor)
+                        
                     distances = {
                         name: torch.dist(img_embedding, saved_emb).item()
                         for name, saved_emb in self.all_people_faces.items()
@@ -82,20 +114,30 @@ class FaceRecognize:
                     min_name = min(distances, key=distances.get)
                     min_dist = distances[min_name]
 
-                    if min_dist > thres:
-                        min_name = "Unknown"
+                    if min_dist < thres:
+                        name = min_name
+                        self.identity_map[track_id] = {
+                            "name" : name,
+                            "last_seen" : self.frame_count
+                        }
+                    else:
+                        name = "Unknown"
 
-                    cv2.rectangle(img0, (x, y), (x2, y2), (0, 0, 255), 2)
-                    cv2.putText(
-                        img0,
-                        f"{min_name} ({min_dist})",
-                        (x, y - 10),
-                        cv2.FONT_HERSHEY_DUPLEX,
-                        0.6,
-                        (255, 255, 255)
-                    )
+                cv2.rectangle(img0, (x, y), (x2, y2), (0, 0, 255), 2)
+                cv2.putText(
+                    img0,
+                    f"{name} | {track_id}",
+                    (x, y - 10),
+                    cv2.FONT_HERSHEY_DUPLEX,
+                    0.6,
+                    (255, 255, 255)
+                )
 
-            cv2.imshow("Face Recognition: ", img0)
+            for tid in list(self.identity_map.keys()):
+                if self.frame_count - self.identity_map[tid]["last_seen"] > 60:
+                    del self.identity_map[tid]
+            
+            cv2.imshow(WINDOW_NAME, img0)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
