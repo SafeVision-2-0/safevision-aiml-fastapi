@@ -1,0 +1,7 @@
+torch
+facenet_pytorch
+numpy
+ipykernel
+opencv-python
+matplotlib
+sort-tracker
