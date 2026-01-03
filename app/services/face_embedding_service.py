@@ -19,6 +19,10 @@ def run_face_embedding_pipeline(session: Session):
         )
     ).all()
     
+    #
+    #
+    #
+    
     if not images:
         return {"message": "Images not found"}
     

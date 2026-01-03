@@ -8,3 +8,7 @@ supervision
 
 # Database
 sqlmodel
+pydantic-settings
+
+# Server
+fastapi
