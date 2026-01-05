@@ -11,7 +11,7 @@ from app.core.face_encoder import FaceEncoder
 from app.core.face_tracking import FaceTracker
 
 class FaceRecognitionService:
-    def __init__(self):
+    def __init__(self, session: Session):
         self.detector= FaceDetector()
         self.encoder = FaceEncoder()
         self.tracker = FaceTracker()
@@ -20,6 +20,7 @@ class FaceRecognitionService:
         self.known_faces = {}
         self.frame_count = 0
         
+        self._load_known_faces_from_db(session)
         
     def _load_known_faces_from_db(self, session: Session):
         """

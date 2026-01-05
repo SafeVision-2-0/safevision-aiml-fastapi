@@ -1,4 +1,3 @@
-import torch
 from facenet_pytorch import MTCNN
 
 class FaceDetector:
