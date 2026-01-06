@@ -24,24 +24,25 @@ class FaceRecognitionService:
         self._load_known_faces_from_folder(known_faces_dir)
 
     def _load_known_faces_from_folder(self, root_dir):
-        for person in os.listdir(root_dir):
-            person_dir = os.path.join(root_dir, person)
-            if not os.path.isdir(person_dir):
+        for file in os.listdir(root_dir):
+            if not file.lower().endswith((".jpg", ".png", ".jpeg")):
                 continue
 
-            for file in os.listdir(person_dir):
-                if not file.lower().endswith((".jpg", ".png", ".jpeg")):
-                    continue
+            name = file.split("_")[0]  # ikram_1.jpg → ikram
 
-                img = cv2.imread(os.path.join(person_dir, file))
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img_path = os.path.join(root_dir, file)
+            img = cv2.imread(img_path)
+            if img is None:
+                continue
 
-                boxes, faces = self.detector.detect(img)
-                if faces is None:
-                    continue
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            boxes, faces = self.detector.detect_box(img)
 
-                emb = self.encoder.encode(faces[0])
-                self.known_faces.setdefault(person, []).append(emb)
+            if faces is None:
+                continue
+
+            emb = self.encoder.encode(faces[0])
+            self.known_faces.setdefault(name, []).append(emb)
 
         print("Loaded known faces:", len(self.known_faces))
         
@@ -83,10 +84,17 @@ class FaceRecognitionService:
                 name = self.identity_map[track_id]["name"]
                 self.identity_map[track_id]["last_seen"] = self.frame_count
             else:
-                distances = {
-                    k: torch.dist(face_emb, v).item()
-                    for k, v in self.known_faces.items()
-                }
+                # distances = {
+                #     k: torch.dist(face_emb, v).item()
+                #     for k, v in self.known_faces.items()
+                # }
+                
+                # bug
+                distances = {}
+                
+                for name, embs in self.known_faces.items():
+                    dists = [torch.dist(face_emb, e).item() for e in embs]
+                    distances[name] = min(dists)
                 
                 if distances:
                     min_name = min(distances, key=distances.get)
