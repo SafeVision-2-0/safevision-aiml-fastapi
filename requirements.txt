@@ -12,3 +12,4 @@ pydantic-settings
 
 # Server
 fastapi
+uvicorn
