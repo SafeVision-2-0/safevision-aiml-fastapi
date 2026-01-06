@@ -1,5 +1,6 @@
 import cv2
 import torch
+import os
 
 from sqlmodel import Session, select
 from app.models.user_model import User
@@ -11,7 +12,7 @@ from app.core.face_encoder import FaceEncoder
 from app.core.face_tracking import FaceTracker
 
 class FaceRecognitionService:
-    def __init__(self, session: Session):
+    def __init__(self, known_faces_dir="./picture/"):
         self.detector= FaceDetector()
         self.encoder = FaceEncoder()
         self.tracker = FaceTracker()
@@ -20,7 +21,29 @@ class FaceRecognitionService:
         self.known_faces = {}
         self.frame_count = 0
         
-        self._load_known_faces_from_db(session)
+        self._load_known_faces_from_folder(known_faces_dir)
+
+    def _load_known_faces_from_folder(self, root_dir):
+        for person in os.listdir(root_dir):
+            person_dir = os.path.join(root_dir, person)
+            if not os.path.isdir(person_dir):
+                continue
+
+            for file in os.listdir(person_dir):
+                if not file.lower().endswith((".jpg", ".png", ".jpeg")):
+                    continue
+
+                img = cv2.imread(os.path.join(person_dir, file))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+                boxes, faces = self.detector.detect(img)
+                if faces is None:
+                    continue
+
+                emb = self.encoder.encode(faces[0])
+                self.known_faces.setdefault(person, []).append(emb)
+
+        print("Loaded known faces:", len(self.known_faces))
         
     def _load_known_faces_from_db(self, session: Session):
         """
@@ -78,11 +101,16 @@ class FaceRecognitionService:
                 else:
                     name = "Unknown"
                     
-            x1, y1, x2, y2 = tracked.xyxy[i].astype(int)
+            x1, y1, x2, y2 = tracked.xyxy[i]
             results.append({
                 "track_id": int(track_id),
                 "name": name,
-                "bbox": [x1, y1, x2, y2]
+                "bbox": [
+                    int(x1),
+                    int(y1),
+                    int(x2),
+                    int(y2)
+                ]
             })
             
         self.identity_map = {
