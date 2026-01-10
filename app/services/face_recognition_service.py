@@ -2,8 +2,8 @@ import cv2
 import torch
 
 from sqlmodel import Session, select
-from app.models.user_model import User
-from app.models.user_image_model import UserImage
+from app.models.profile_model import User
+from app.models.profile_image_model import UserImage
 from app.models.face_embedding_model import FaceEmbedding
 
 from app.core.face_detector import FaceDetector
