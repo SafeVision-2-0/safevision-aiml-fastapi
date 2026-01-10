@@ -36,5 +36,5 @@ async def face_ws(ws: WebSocket):
             })
     except Exception as e:
         print("websocket error: ", e) 
-    finally:
-        await ws.close()
+    # finally:
+        # await ws.close()
