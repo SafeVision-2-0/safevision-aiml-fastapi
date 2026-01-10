@@ -2,8 +2,8 @@ import cv2
 import torch
 
 from sqlmodel import Session, select
-from app.models.profile_model import User
-from app.models.profile_image_model import UserImage
+from app.models.profile_model import Profile
+from app.models.profile_image_model import ProfileImage
 from app.models.face_embedding_model import FaceEmbedding
 
 from app.core.face_detector import FaceDetector
@@ -28,12 +28,12 @@ class FaceRecognitionService:
         as { user_name: embedding_tensor }
         """
         statement = (
-            select(User.name, FaceEmbedding.vector)
-            .join(UserImage, User.id == UserImage.user_id)
-            .join(FaceEmbedding, UserImage.id == FaceEmbedding.user_image_id)
+            select(Profile.name, FaceEmbedding.vector)
+            .join(ProfileImage, Profile.id == ProfileImage.profile_id)
+            .join(FaceEmbedding, ProfileImage.id == FaceEmbedding.profile_image_id)
         )
         
-        results = session.exec(statement).all()
+        results = session.exec(statement=statement).all()
         
         for name, vector in results:
             self.known_faces[name] = torch.tensor(

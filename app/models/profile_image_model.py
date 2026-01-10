@@ -6,6 +6,8 @@ if TYPE_CHECKING:
     from app.models.face_embedding_model import FaceEmbedding
 
 class ProfileImage(SQLModel, table=True):
+    __tablename__ = "profile_image"
+    
     id: int | None = Field(default=None, primary_key=True)
     profile_id: int = Field(foreign_key="profile.id")
     image_path: str

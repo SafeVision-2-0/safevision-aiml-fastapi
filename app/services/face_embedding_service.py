@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from app.models.profile_image_model import UserImage
+from app.models.profile_image_model import ProfileImage
 from app.models.face_embedding_model import FaceEmbedding
 from app.core.face_model import extract_embedding
 
@@ -11,9 +11,9 @@ def run_face_embedding_pipeline(session: Session):
     3. simpan ke database
     """
     images = session.exec(
-        select(UserImage)
+        select(ProfileImage)
         .where(
-            UserImage.id.not_in(
+            ProfileImage.id.not_in(
                 select(FaceEmbedding.user_image_id)
             )
         )

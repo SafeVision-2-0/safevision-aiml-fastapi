@@ -6,6 +6,8 @@ if TYPE_CHECKING:
     from app.models.profile_image_model import ProfileImage
 
 class Profile(SQLModel, table=True):
+    __tablename__ = "profile"
+    
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True)
     
