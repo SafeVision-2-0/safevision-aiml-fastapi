@@ -12,3 +12,5 @@ pydantic-settings
 
 # Server
 fastapi
+uvicorn
+websockets

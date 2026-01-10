@@ -3,11 +3,11 @@ import base64
 import numpy as np
 from fastapi import WebSocket, APIRouter
 
-from app.db.session import get_session
+# from app.db.session import get_session
 from app.services.face_recognition_service import FaceRecognitionService
 
 router = APIRouter()
-service = FaceRecognitionService(get_session())
+service = FaceRecognitionService()
 
 @router.websocket("/ws/face-recognition")
 async def face_ws(ws: WebSocket):
@@ -36,5 +36,5 @@ async def face_ws(ws: WebSocket):
             })
     except Exception as e:
         print("websocket error: ", e) 
-    finally:
-        await ws.close()
+    # finally:
+        # await ws.close()
