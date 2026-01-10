@@ -1,6 +1,7 @@
 import cv2
 import base64
 import numpy as np
+import time
 from fastapi import WebSocket, APIRouter
 
 # from app.db.session import get_session
@@ -27,8 +28,15 @@ async def face_ws(ws: WebSocket):
             if frame is None:
                 continue
             
+            start = time.time()
+            
             # Run Face Recognition
             results = service.process_frame(frame)
+            
+            elapsed = time.time() - start
+            fps = 1 / elapsed if elapsed > 0 else 0
+            
+            print(f"[BACKEND] FPS: {fps:.2f} | Time: {elapsed*1000:.1f} ms")
             
             # Send Metadata back
             await ws.send_json({
