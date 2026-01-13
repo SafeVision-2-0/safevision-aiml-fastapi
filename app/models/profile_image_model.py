@@ -10,7 +10,7 @@ class ProfileImage(SQLModel, table=True):
     
     id: int | None = Field(default=None, primary_key=True)
     profile_id: int = Field(foreign_key="profile.id")
-    image_path: str
+    image: str
     
     profile: "Profile" = Relationship(back_populates="images")
     embeddings: List["FaceEmbedding"] = Relationship(back_populates="profile_image")
