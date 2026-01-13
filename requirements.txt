@@ -13,3 +13,5 @@ pymysql
 
 # Server
 fastapi
+uvicorn
+websockets

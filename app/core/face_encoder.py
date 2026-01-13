@@ -3,7 +3,7 @@ import torch
 
 class FaceEncoder:
     def __init__(self, model_pretrained="casia-webface"):
-        self.model = InceptionResnetV1(pretrained=model_pretrained)
+        self.model = InceptionResnetV1(pretrained=model_pretrained).eval()
 
     @torch.no_grad()
     def encode(self, face_tensor):

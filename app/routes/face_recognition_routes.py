@@ -1,6 +1,7 @@
 import cv2
 import base64
 import numpy as np
+import time
 from fastapi import WebSocket, APIRouter
 from sqlmodel import Session
 
@@ -8,6 +9,7 @@ from app.services.face_recognition_service import FaceRecognitionService
 from app.db.session import engine
 
 router = APIRouter()
+service = FaceRecognitionService()
 
 @router.websocket("/ws/face-recognition")
 async def face_ws(ws: WebSocket):
