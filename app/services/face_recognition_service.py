@@ -62,6 +62,7 @@ class FaceRecognitionService:
         results = session.exec(statement=statement).all()
         
         for profile_id, name, vector in results:
+            # for long_text definition in database and if definition in sql JSON then this is skipped
             vector_list = json.loads(vector)
             emb = torch.tensor(vector_list, dtype=torch.float32)
             if profile_id not in self.known_faces:
