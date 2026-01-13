@@ -2,6 +2,7 @@ from sqlmodel import Session, select
 from app.models.profile_image_model import ProfileImage
 from app.models.face_embedding_model import FaceEmbedding
 from app.core.face_model import extract_embedding
+from app.core.config import settings
 import numpy as np
 import requests
 import tempfile
@@ -28,8 +29,8 @@ def run_face_embedding_pipeline(session: Session):
     
     for img in images:
         # print("DEBUG: image_id => ", img.id)
-        BASE_URL = "http://localhost:8000"
-        img_url = f"{BASE_URL}{img.image_path}"
+        BASE_URL = settings.EXPRESS_API_URL 
+        img_url = f"{BASE_URL}/{img.image}"
         embedding = extract_embedding_from_url(img_url)
         
         if embedding is None:
