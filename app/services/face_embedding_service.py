@@ -1,7 +1,11 @@
 from sqlmodel import Session, select
-from app.models.user_image_model import UserImage
+from app.models.profile_image_model import ProfileImage
 from app.models.face_embedding_model import FaceEmbedding
 from app.core.face_model import extract_embedding
+import numpy as np
+import requests
+import tempfile
+import os
 
 def run_face_embedding_pipeline(session: Session):
     """
@@ -11,10 +15,10 @@ def run_face_embedding_pipeline(session: Session):
     3. simpan ke database
     """
     images = session.exec(
-        select(UserImage)
+        select(ProfileImage)
         .where(
-            UserImage.id.not_in(
-                select(FaceEmbedding.user_image_id)
+            ProfileImage.id.not_in(
+                select(FaceEmbedding.profile_image_id)
             )
         )
     ).all()
@@ -23,13 +27,16 @@ def run_face_embedding_pipeline(session: Session):
         return {"message": "Images not found"}
     
     for img in images:
-        embedding = extract_embedding(img.image_path)
+        # print("DEBUG: image_id => ", img.id)
+        BASE_URL = "http://localhost:8000"
+        img_url = f"{BASE_URL}{img.image_path}"
+        embedding = extract_embedding_from_url(img_url)
         
         if embedding is None:
             continue
         
         face_embedding = FaceEmbedding(
-            user_image_id=img.id,
+            profile_image_id=img.id,
             vector=embedding.tolist()
         )
         
@@ -38,3 +45,17 @@ def run_face_embedding_pipeline(session: Session):
     session.commit()
     
     return {"message": "Embedding pipeline finished"}
+
+def extract_embedding_from_url(image_url: str) -> np.ndarray | None:
+    resp = requests.get(image_url, timeout=10)
+    if resp.status_code != 200:
+        return None
+    
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
+        f.write(resp.content)
+        temp_path = f.name
+        
+    try:
+        return extract_embedding(temp_path)
+    finally:
+        os.remove(temp_path)
