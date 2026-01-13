@@ -1,6 +1,7 @@
 import cv2
 import torch
 import os
+import json
 
 from sqlmodel import Session, select
 from app.models.profile_model import Profile
@@ -61,7 +62,8 @@ class FaceRecognitionService:
         results = session.exec(statement=statement).all()
         
         for profile_id, name, vector in results:
-            emb = torch.tensor(vector, dtype=torch.float32)
+            vector_list = json.loads(vector)
+            emb = torch.tensor(vector_list, dtype=torch.float32)
             if profile_id not in self.known_faces:
                 self.known_faces[profile_id] = {
                     "name": name,
