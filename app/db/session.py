@@ -6,7 +6,7 @@ DATABASE_URL = settings.DATABASE_URL
 engine = create_engine(
     DATABASE_URL,
     echo=True, # Melihat query SQL
-    pool_pre_ping=True
+    pool_pre_ping=False
 )
 
 def get_session():

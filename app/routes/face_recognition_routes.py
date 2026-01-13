@@ -9,7 +9,6 @@ from app.services.face_recognition_service import FaceRecognitionService
 from app.db.session import engine
 
 router = APIRouter()
-service = FaceRecognitionService()
 
 @router.websocket("/ws/face-recognition")
 async def face_ws(ws: WebSocket):
@@ -41,5 +40,3 @@ async def face_ws(ws: WebSocket):
                 })
         except Exception as e:
             print("websocket error: ", e) 
-        finally:
-            await ws.close()

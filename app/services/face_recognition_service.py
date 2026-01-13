@@ -12,7 +12,7 @@ from app.core.face_encoder import FaceEncoder
 from app.core.face_tracking import FaceTracker
 
 class FaceRecognitionService:
-    def __init__(self, known_faces_dir="./picture/"):
+    def __init__(self, session: Session):
         self.detector= FaceDetector()
         self.encoder = FaceEncoder()
         self.tracker = FaceTracker()
@@ -21,8 +21,9 @@ class FaceRecognitionService:
         self.known_faces = {}
         self.frame_count = 0
         
-        self._load_known_faces_from_folder(known_faces_dir)
+        self._load_known_faces_from_db(session)
 
+    # DEBUG
     def _load_known_faces_from_folder(self, root_dir):
         for file in os.listdir(root_dir):
             if not file.lower().endswith((".jpg", ".png", ".jpeg")):
@@ -52,19 +53,24 @@ class FaceRecognitionService:
         as { user_name: embedding_tensor }
         """
         statement = (
-            select(Profile.name, FaceEmbedding.vector)
+            select(Profile.id, Profile.name, FaceEmbedding.vector)
             .join(ProfileImage, Profile.id == ProfileImage.profile_id)
             .join(FaceEmbedding, ProfileImage.id == FaceEmbedding.profile_image_id)
         )
         
         results = session.exec(statement=statement).all()
         
-        for name, vector in results:
-            self.known_faces[name] = torch.tensor(
-                vector, dtype=torch.float32
-            )
+        for profile_id, name, vector in results:
+            emb = torch.tensor(vector, dtype=torch.float32)
+            if profile_id not in self.known_faces:
+                self.known_faces[profile_id] = {
+                    "name": name,
+                    "embeddings": []
+                }
+            
+            self.known_faces[profile_id]["embeddings"].append(emb)
         
-        print(f"Loaded {len(self.known_faces)} known face embeddings")
+        print(f"Loaded {sum(len(v['embeddings']) for v in self.known_faces.values())} known face embeddings")
         
     def process_frame(self, frame, threshold=0.7):
         self.frame_count += 1
@@ -81,8 +87,8 @@ class FaceRecognitionService:
             face_emb = self.encoder.encode(faces[i])
             
             if track_id in self.identity_map:
-                name = self.identity_map[track_id]["name"]
-                self.identity_map[track_id]["last_seen"] = self.frame_count
+                identity = self.identity_map[track_id]
+                identity["last_seen"] = self.frame_count
             else:
                 # distances = {
                 #     k: torch.dist(face_emb, v).item()
@@ -92,27 +98,34 @@ class FaceRecognitionService:
                 # bug
                 distances = {}
                 
-                for name, embs in self.known_faces.items():
-                    dists = [torch.dist(face_emb, e).item() for e in embs]
-                    distances[name] = min(dists)
+                for profile_id, data in self.known_faces.items():
+                    dists = [
+                        torch.dist(face_emb, emb).item()
+                        for emb in data["embeddings"]
+                    ]
+                    distances[profile_id] = min(dists)
                 
                 if distances:
-                    min_name = min(distances, key=distances.get)
-                    if distances[min_name] < threshold:
-                        name = min_name
+                    best_id = min(distances, key=distances.get)
+                    if distances[best_id] < threshold:
+                        identity = {
+                            "profile_id": best_id,
+                            "name": self.known_faces[best_id]["name"]
+                        }
                         self.identity_map[track_id] = {
-                            "name" : name,
+                            **identity,
                             "last_seen" : self.frame_count
                         }
                     else:
-                        name = "Unknown"   
+                        identity = {"profile_id": None, "name": "Unknown"}   
                 else:
-                    name = "Unknown"
+                    identity = {"profile_id": None, "name": "Unknown"}
                     
             x1, y1, x2, y2 = tracked.xyxy[i]
             results.append({
                 "track_id": int(track_id),
-                "name": name,
+                "profile_id": identity["profile_id"],
+                "name": identity["name"],
                 "bbox": [
                     int(x1),
                     int(y1),
