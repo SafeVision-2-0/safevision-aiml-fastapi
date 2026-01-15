@@ -10,12 +10,12 @@ from app.db.session import engine
 
 router = APIRouter()
 
-@router.websocket("/ws/face-recognition")
-async def face_ws(ws: WebSocket):
+@router.websocket("/ws/face-recognition/{model_name}")
+async def face_ws(ws: WebSocket, model_name: str):
     await ws.accept()
     
     with Session(engine) as session:
-        service = FaceRecognitionService(session)
+        service = FaceRecognitionService(session, model_name)
         
         try:
             while True:
@@ -31,8 +31,15 @@ async def face_ws(ws: WebSocket):
                 if frame is None:
                     continue
                 
+                start = time.time()
+                
                 # Run Face Recognition
                 results = service.process_frame(frame)
+                
+                elapsed = time.time() - start
+                fps = 1 / elapsed if elapsed > 0 else 0
+                
+                print(f"[BACKEND] FPS: {fps:.2f} | Time: {elapsed*1000:.1f} ms")
                 
                 # Send Metadata back
                 await ws.send_json({

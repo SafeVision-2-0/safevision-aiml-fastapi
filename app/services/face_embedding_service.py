@@ -31,14 +31,18 @@ def run_face_embedding_pipeline(session: Session):
         # print("DEBUG: image_id => ", img.id)
         BASE_URL = settings.EXPRESS_API_URL 
         img_url = f"{BASE_URL}/{img.image}"
-        embedding = extract_embedding_from_url(img_url)
+        embedding_casia = extract_embedding_from_url("casia-webface", img_url)
+        if embedding_casia is None:
+            continue
         
-        if embedding is None:
+        embedding_vgg = extract_embedding_from_url("vggface2", img_url)
+        if embedding_vgg is None:
             continue
         
         face_embedding = FaceEmbedding(
             profile_image_id=img.id,
-            vector=embedding.tolist()
+            vector_casia=embedding_casia.tolist(),
+            vector_vgg=embedding_vgg.tolist()
         )
         
         session.add(face_embedding)
@@ -47,7 +51,7 @@ def run_face_embedding_pipeline(session: Session):
     
     return {"message": "Embedding pipeline finished"}
 
-def extract_embedding_from_url(image_url: str) -> np.ndarray | None:
+def extract_embedding_from_url(resnet: str, image_url: str) -> np.ndarray | None:
     resp = requests.get(image_url, timeout=10)
     if resp.status_code != 200:
         return None
@@ -57,6 +61,6 @@ def extract_embedding_from_url(image_url: str) -> np.ndarray | None:
         temp_path = f.name
         
     try:
-        return extract_embedding(temp_path)
+        return extract_embedding(resnet, temp_path)
     finally:
         os.remove(temp_path)
