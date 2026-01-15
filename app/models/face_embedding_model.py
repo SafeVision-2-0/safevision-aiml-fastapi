@@ -10,6 +10,7 @@ class FaceEmbedding(SQLModel, table=True):
     
     id: int | None = Field(default=None, primary_key=True)
     profile_image_id: int = Field(foreign_key="profile_image.id")
-    vector: list[float] = Field(sa_column=Column(JSON))
-    
+    vector_casia: list[float] = Field(sa_column=Column(JSON))
+    vector_vgg: list[float] = Field(sa_column=Column(JSON))
+
     profile_image: "ProfileImage" = Relationship(back_populates="embeddings")

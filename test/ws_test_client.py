@@ -6,7 +6,8 @@ import websockets
 
 async def test_ws():
     cap = cv2.VideoCapture(0)
-    uri="ws://localhost:8000/ws/face-recognition"
+    uri="ws://localhost:8000/ws/face-recognition/vggface2"
+    # uri="ws://localhost:8000/ws/face-recognition/casia-webface"
     async with websockets.connect(uri,  max_size=10 * 1024 * 1024) as ws:
         print("Connected to ws")
         

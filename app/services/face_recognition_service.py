@@ -13,10 +13,11 @@ from app.core.face_encoder import FaceEncoder
 from app.core.face_tracking import FaceTracker
 
 class FaceRecognitionService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, model_name: str):
         self.detector= FaceDetector()
-        self.encoder = FaceEncoder()
+        self.encoder = FaceEncoder(model_pretrained=model_name)
         self.tracker = FaceTracker()
+        self.model_name = model_name
         
         self.identity_map = {}
         self.known_faces = {}
@@ -53,8 +54,13 @@ class FaceRecognitionService:
         Load face embeddings from database and store them in memory
         as { user_name: embedding_tensor }
         """
+        if self.model_name == "casia-webface":
+            vector_column = FaceEmbedding.vector_casia
+        else:
+            vector_column = FaceEmbedding.vector_vgg
+            
         statement = (
-            select(Profile.id, Profile.name, FaceEmbedding.vector)
+            select(Profile.id, Profile.name, vector_column)
             .join(ProfileImage, Profile.id == ProfileImage.profile_id)
             .join(FaceEmbedding, ProfileImage.id == FaceEmbedding.profile_image_id)
         )
@@ -71,32 +77,37 @@ class FaceRecognitionService:
             
             self.known_faces[profile_id]["embeddings"].append(emb)
         
-        print(f"Loaded {sum(len(v['embeddings']) for v in self.known_faces.values())} known face embeddings")
+        print(f"Loaded {sum(len(v['embeddings']) for v in self.known_faces.values())} known face embeddings {vector_column}")
         
-    def process_frame(self, frame, threshold=0.7):
+    def process_frame(self, frame):
         self.frame_count += 1
         
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if self.model_name == "casia-webface":
+            threshold = 0.9
+        else:
+            threshold = 0.9
+        
+        scale = 0.5
+        small = cv2.resize(frame, None, fx=scale, fy=scale)
+        rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
         boxes, faces = self.detector.detect_box(rgb)
+        
         if boxes is None or faces is None:
             return []
+        
+        boxes = boxes / scale
+        faces = faces / scale
         
         tracked = self.tracker.update(boxes)
         results = []
         
         for i, track_id in enumerate(tracked.tracker_id):
-            face_emb = self.encoder.encode(faces[i])
-            
             if track_id in self.identity_map:
                 identity = self.identity_map[track_id]
                 identity["last_seen"] = self.frame_count
             else:
-                # distances = {
-                #     k: torch.dist(face_emb, v).item()
-                #     for k, v in self.known_faces.items()
-                # }
+                face_emb = self.encoder.encode(faces[i])
                 
-                # bug
                 distances = {}
                 
                 for profile_id, data in self.known_faces.items():
@@ -141,3 +152,4 @@ class FaceRecognitionService:
         }
         
         return results
+    
