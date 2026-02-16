@@ -1,4 +1,4 @@
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, create_engine, SQLModel
 from app.core.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
@@ -6,7 +6,7 @@ DATABASE_URL = settings.DATABASE_URL
 engine = create_engine(
     DATABASE_URL,
     echo=True, # Melihat query SQL
-    pool_pre_ping=True
+    pool_pre_ping=False
 )
 
 def get_session():
@@ -16,3 +16,6 @@ def get_session():
     """
     with Session(engine) as session:
         yield session
+                
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)

@@ -5,11 +5,14 @@ ipykernel
 opencv-python
 matplotlib
 supervision
+cryptography
 
 # Database
 sqlmodel
 pydantic-settings
+pymysql
 
 # Server
 fastapi
 uvicorn
+websockets

@@ -9,9 +9,10 @@ mtcnn = MTCNN(
     min_face_size=60
 )
 
-resnet = InceptionResnetV1(pretrained='casia-webface').eval()
+resnet_casia = InceptionResnetV1(pretrained='casia-webface').eval()
+resnet_vgg = InceptionResnetV1(pretrained='vggface2').eval()
 
-def extract_embedding(image_path: str) -> np.ndarray | None:
+def extract_embedding(resnet: str, image_path: str) -> np.ndarray | None:
     """
     Load image, detect face, return embedding
     """
@@ -32,6 +33,9 @@ def extract_embedding(image_path: str) -> np.ndarray | None:
     face = faces[0].unsqueeze(0)
 
     with torch.no_grad():
-        emb = resnet(face)
+        if resnet == "casia-webface":
+            emb = resnet_casia(face)
+        else:
+            emb = resnet_vgg(face)
         
     return emb.squeeze(0).cpu().numpy()
