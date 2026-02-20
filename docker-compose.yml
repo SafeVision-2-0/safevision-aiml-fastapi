@@ -6,27 +6,12 @@ services:
     container_name: fastapi_web
     volumes:
       - torch_cache:/root/.cache/torch
-    depends_on:
-      - db
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: mysql+pymysql://root:abc@db:3306/safevision
-      EXPRESS_API_URL: http://localhost:8080
+      DATABASE_URL: ${DATABASE_URL_DOCKER}
+      EXPRESS_API_URL: ${EXPRESS_API_URL}
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-  db:
-    image: mysql:8
-    container_name: mysql_db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: abc
-      MYSQL_DATABASE: safevision 
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-
 volumes:
-  mysql_data: 
   torch_cache:
