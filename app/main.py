@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from typing import Annotated
 from sqlmodel import Session
 from pathlib import Path
+import os
 
 from app.routes.face_embedding_routes import router as face_embedding_router
 from app.routes.face_recognition_routes import router as face_recognition_router
@@ -12,7 +13,7 @@ from app.db.session import get_session, create_db_and_tables
 SessionDep = Annotated[Session, Depends(get_session)]
 
 # Ini debug
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 PICTURE_DIR = BASE_DIR / "picture"
 
 app = FastAPI()
