@@ -1,10 +1,12 @@
-## 🚀 Cara Menjalankan Aplikasi (Local Development)
+---
 
-Ikuti langkah-langkah berikut untuk menjalankan FastAPI di environment lokal.
+## 🚀 How to Run the Application (Local Development)
+
+Follow the steps below to run the FastAPI application in a local environment.
 
 ---
 
-### 1️⃣ Clone Repository
+### 1️⃣ Clone the Repository
 
 ```bash
 git clone https://github.com/SafeVision-2-0/safevision-aiml-fastapi.git
@@ -13,7 +15,7 @@ cd safevision-aiml-fastapi
 
 ---
 
-### 2️⃣ Buat Virtual Environment
+### 2️⃣ Create a Virtual Environment
 
 #### Windows
 
@@ -29,7 +31,7 @@ python3 -m venv venv
 
 ---
 
-### 3️⃣ Aktifkan Virtual Environment
+### 3️⃣ Activate the Virtual Environment
 
 #### Windows (PowerShell)
 
@@ -43,7 +45,7 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-Jika berhasil, terminal akan menampilkan:
+If successful, the terminal will display:
 
 ```text
 (venv)
@@ -53,7 +55,7 @@ Jika berhasil, terminal akan menampilkan:
 
 ### 4️⃣ Install Dependencies
 
-Pastikan berada di root project, lalu jalankan:
+Make sure you are in the project root directory, then run:
 
 ```bash
 pip install -r requirements.txt
@@ -61,47 +63,41 @@ pip install -r requirements.txt
 
 ---
 
-### 5️⃣ Jalankan FastAPI Server
+### 5️⃣ Run the FastAPI Server
 
-Gunakan **uvicorn** untuk menjalankan aplikasi FastAPI yang berada di `app/main.py`:
+Use **uvicorn** to run the FastAPI application located in `app/main.py`:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Keterangan:
+Explanation:
 
-* `app.main` → lokasi file `main.py`
-* `app` → instance FastAPI
-* `--reload` → auto-reload saat development
+* `app.main` → location of the `main.py` file
+* `app` → FastAPI instance
+* `--reload` → enables auto-reload during development
 
 ---
 
-### 6️⃣ Akses Aplikasi
+### 6️⃣ Access the Application
 
 * API root:
 
-  ```
-  http://127.0.0.1:8000
-  ```
+```
+http://127.0.0.1:8000
+```
 
-* Swagger UI (API Documentation): (Progress)
+* Swagger UI (API Documentation):
 
-  ```
-  http://127.0.0.1:8000/docs
-  ```
-
-* ReDoc: (Progress)
-
-  ```
-  http://127.0.0.1:8000/redoc
-  ```
+```
+http://127.0.0.1:8000/docs
+```
 
 ---
 
-### 7️⃣ Menghentikan Server
+### 7️⃣ Stop the Server
 
-Tekan:
+Press:
 
 ```text
 CTRL + C
@@ -109,21 +105,21 @@ CTRL + C
 
 ---
 
-## 📁 Struktur Entry Point
+## 📁 Entry Point Structure
 
 ```text
 app/
-└── main.py   ← Entry point FastAPI
+└── main.py   ← FastAPI entry point
 ```
 
 ---
 
-## ℹ️ Catatan
+## ℹ️ Notes
 
-* Pastikan **Python 3.9+** sudah terinstall
-* Virtual environment **wajib aktif** saat development
-* Gunakan `.env` untuk konfigurasi sensitif (jangan di-push ke GitHub)
+* Make sure **Python 3.10** is installed
+* The virtual environment **must be activated** during development, or you can use Docker from the **`8-docker-implementation` branch**
+* Use `.env` for sensitive configuration (do not push it to GitHub)
 
 ---
 
-
+Supaya repo kalian kelihatan **lebih profesional seperti open-source project**.
